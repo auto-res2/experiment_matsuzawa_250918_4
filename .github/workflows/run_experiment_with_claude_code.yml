@@ -55,10 +55,12 @@ jobs:
           python-version: "3.11"
           enable-cache: false
 
-      - name: Install jq
+      - name: Install jq (static binary, user-local)
         run: |
-          curl -L -o /usr/local/bin/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
-          chmod +x /usr/local/bin/jq
+          mkdir -p $HOME/bin
+          curl -L -o $HOME/bin/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
+          chmod +x $HOME/bin/jq
+          echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Prepare iteration dir
         run: |
