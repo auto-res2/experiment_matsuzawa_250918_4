@@ -1,11 +1,27 @@
 import os
 import torch
 from torch_geometric.datasets import Flickr, Reddit, TUDataset
-from ogb.nodeproppred import PygNodePropPredDataset
 import torch_geometric.transforms as T
 import networkx as nx
 from torch_geometric.utils import from_networkx
 import numpy as np
+
+# Monkey patch torch.load to handle weights_only issue
+original_torch_load = torch.load
+
+def patched_torch_load(f, map_location=None, pickle_module=None, **kwargs):
+    # Remove weights_only parameter if present and always use False for compatibility
+    kwargs.pop('weights_only', None)
+    try:
+        return original_torch_load(f, map_location=map_location, pickle_module=pickle_module, weights_only=False, **kwargs)
+    except Exception as e:
+        print(f"torch.load failed with weights_only=False, trying without: {e}")
+        return original_torch_load(f, map_location=map_location, pickle_module=pickle_module, **kwargs)
+
+torch.load = patched_torch_load
+
+# Now import OGB after patching torch.load
+from ogb.nodeproppred import PygNodePropPredDataset
 
 # Monkey patch to automatically answer 'y' for OGB dataset downloads
 def auto_yes_input(prompt):
@@ -30,7 +46,12 @@ def get_data(name, root='data/'):
             print(f"Failed to load cached data with weights_only=False: {e}")
             # If weights_only=False fails, allow unsafe globals for PyG data structures
             import torch_geometric.data.data
-            torch.serialization.add_safe_globals([torch_geometric.data.data.DataEdgeAttr])
+            import torch_geometric.data.batch
+            torch.serialization.add_safe_globals([
+                torch_geometric.data.data.DataEdgeAttr,
+                torch_geometric.data.data.Data,
+                torch_geometric.data.batch.Batch
+            ])
             data = torch.load(processed_path, weights_only=True)
         return data
     
@@ -76,7 +97,15 @@ def get_data(name, root='data/'):
         else: # multi-label
              data.num_classes = data.y.shape[1]
 
-    torch.save(data, processed_path)
+    try:
+        # Ensure processed directory exists
+        os.makedirs(os.path.dirname(processed_path), exist_ok=True)
+        torch.save(data, processed_path)
+    except Exception as e:
+        print(f"Failed to save data normally: {e}")
+        # Use legacy save method for compatibility
+        os.makedirs(os.path.dirname(processed_path), exist_ok=True)
+        torch.save(data, processed_path, _use_new_zipfile_serialization=False)
     return data
 
 def generate_synthetic_graph(d, h, p_rewire, n=20000, num_classes=10, feature_dim=256):

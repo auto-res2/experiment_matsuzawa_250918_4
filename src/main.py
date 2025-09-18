@@ -147,7 +147,7 @@ def run_single_experiment(config, device, run_id):
         wandb.log(log_dict)
 
     # --- Final Evaluation ---
-    model.load_state_dict(torch.load(os.path.join(config['globals']['log_dir'], f'{run_id}_best_model.pt')), weights_only=False)
+    model.load_state_dict(torch.load(os.path.join(config['globals']['log_dir'], f'{run_id}_best_model.pt')))
     test_metrics = evaluate_model(model, data, data.test_mask, device)
     total_time_taken = time.time() - total_start_time
     total_energy_joules = power_logger.stop()
