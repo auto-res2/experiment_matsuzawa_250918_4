@@ -57,9 +57,9 @@ jobs:
 
       - name: Install jq
         run: |
-          sudo apt-get update -y
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y jq
-      
+          curl -L -o /usr/local/bin/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
+          chmod +x /usr/local/bin/jq
+
       - name: Prepare iteration dir
         run: |
           iteration_dir=".research/iteration${{ github.event.inputs.experiment_iteration }}"
