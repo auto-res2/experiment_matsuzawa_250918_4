@@ -1,0 +1,10 @@
+{
+  "research_topic": "Graph Attention Networkの学習の高速化",
+  "queries": [
+    "accelerated GAT training",
+    "fast GAT convergence",
+    "distributed GAT training",
+    "approximate GAT",
+    "quantized GAT"
+  ]
+}
