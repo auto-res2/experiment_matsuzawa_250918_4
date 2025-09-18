@@ -1,0 +1,284 @@
+warning: No `requires-python` value found in the workspace. Defaulting to `>=3.11`.
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/outdated/__init__.py:36: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 21, in <module>
+    from .evaluate import evaluate_model, run_evaluation
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/evaluate.py", line 160
+    print("--- Results JSON --- G B
+          ^
+SyntaxError: unterminated string literal (detected at line 160)
+warning: No `requires-python` value found in the workspace. Defaulting to `>=3.11`.
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/outdated/__init__.py:36: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+Downloading https://drive.usercontent.google.com/download?id=1crmsTbd1-2sEXsGwa2IKnIB7Zd3TmUsy&confirm=t
+Downloading https://drive.usercontent.google.com/download?id=1join-XdvX3anJU_MLVtick7MgeAQiWIZ&confirm=t
+Downloading https://drive.usercontent.google.com/download?id=1uxIkbtg5drHTsKt-PAsZZ4_yJmgFmle9&confirm=t
+Downloading https://drive.usercontent.google.com/download?id=1htXCtuktuCW8TR8KiKfrFDAxUgekQoV7&confirm=t
+Processing...
+Done!
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 265, in <module>
+    main()
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 206, in main
+    result = run_single_experiment(run_config, device, run_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 86, in run_single_experiment
+    wandb.init(project=config['globals']['wandb_project'], config=config, name=run_id, reinit=True)
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/wandb/sdk/wandb_init.py", line 1573, in init
+    wandb._sentry.reraise(e)
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/wandb/analytics/sentry.py", line 162, in reraise
+    raise exc.with_traceback(sys.exc_info()[2])
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/wandb/sdk/wandb_init.py", line 1496, in init
+    wi.maybe_login(init_settings)
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/wandb/sdk/wandb_init.py", line 190, in maybe_login
+    wandb_login._login(
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/wandb/sdk/wandb_login.py", line 318, in _login
+    key, key_status = wlogin.prompt_api_key(referrer=referrer)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/wandb/sdk/wandb_login.py", line 244, in prompt_api_key
+    raise UsageError("api_key not configured (no-tty). call " + directive)
+wandb.errors.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+warning: No `requires-python` value found in the workspace. Defaulting to `>=3.11`.
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/outdated/__init__.py:36: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 269, in <module>
+    main()
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 210, in main
+    result = run_single_experiment(run_config, device, run_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 81, in run_single_experiment
+    data = get_data(config['dataset']['name'])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/preprocess.py", line 17, in get_data
+    data = torch.load(processed_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/serialization.py", line 1529, in load
+    raise pickle.UnpicklingError(_get_wo_message(str(e))) from None
+_pickle.UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m. 
+	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+	WeightsUnpickler error: Unsupported global: GLOBAL torch_geometric.data.data.DataEdgeAttr was not an allowed global by default. Please use `torch.serialization.add_safe_globals([torch_geometric.data.data.DataEdgeAttr])` or the `torch.serialization.safe_globals([torch_geometric.data.data.DataEdgeAttr])` context manager to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+warning: No `requires-python` value found in the workspace. Defaulting to `>=3.11`.
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/outdated/__init__.py:36: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+wandb: WARNING Using a boolean value for 'reinit' is deprecated. Use 'return_previous' or 'finish_previous' instead.
+wandb: Tracking run with wandb version 0.21.4
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/wandb/offline-run-20250918_114534-ws0sxmfp
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 269, in <module>
+    main()
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 210, in main
+    result = run_single_experiment(run_config, device, run_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 111, in run_single_experiment
+    out = model(data.x.to(device), data.edge_index.to(device), epoch=epoch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1879, in _call_impl
+    return inner()
+           ^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1827, in inner
+    result = forward_call(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 154, in forward
+    x = layer(x, edge_index, epoch=epoch)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 106, in forward
+    q_proj = self._scrf(q.view(N, H*C), edge_index).view(-1, H, C)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 66, in _scrf
+    ap_t = self.propagate(edge_index, x=probe.t(), size=None)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch_geometric/nn/conv/message_passing.py", line 523, in propagate
+    out = self.message(**msg_kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 133, in message
+    alpha = (q_proj_i * k_proj_j).sum(dim=-1) / math.sqrt(self.out_channels)
+             ~~~~~~~~~^~~~~~~~~~
+TypeError: unsupported operand type(s) for *: 'type' and 'type'
+warning: No `requires-python` value found in the workspace. Defaulting to `>=3.11`.
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/outdated/__init__.py:36: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+wandb: WARNING Using a boolean value for 'reinit' is deprecated. Use 'return_previous' or 'finish_previous' instead.
+wandb: Tracking run with wandb version 0.21.4
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/wandb/offline-run-20250918_114824-3v5hudov
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 269, in <module>
+    main()
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 210, in main
+    result = run_single_experiment(run_config, device, run_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 111, in run_single_experiment
+    out = model(data.x.to(device), data.edge_index.to(device), epoch=epoch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1879, in _call_impl
+    return inner()
+           ^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1827, in inner
+    result = forward_call(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 157, in forward
+    x = layer(x, edge_index, epoch=epoch)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 109, in forward
+    q_proj = self._scrf(q.view(N, H*C), edge_index).view(-1, H, C)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 80, in _scrf
+    self.fastfood.sigma = sigma.detach()
+    ^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1990, in __setattr__
+    raise TypeError(
+TypeError: cannot assign 'torch.cuda.FloatTensor' as parameter 'sigma' (torch.nn.Parameter or None expected)
+warning: No `requires-python` value found in the workspace. Defaulting to `>=3.11`.
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/outdated/__init__.py:36: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+wandb: WARNING Using a boolean value for 'reinit' is deprecated. Use 'return_previous' or 'finish_previous' instead.
+wandb: Tracking run with wandb version 0.21.4
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/wandb/offline-run-20250918_115036-9q7dy6na
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 269, in <module>
+    main()
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 210, in main
+    result = run_single_experiment(run_config, device, run_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 111, in run_single_experiment
+    out = model(data.x.to(device), data.edge_index.to(device), epoch=epoch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1879, in _call_impl
+    return inner()
+           ^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1827, in inner
+    result = forward_call(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 157, in forward
+    x = layer(x, edge_index, epoch=epoch)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 109, in forward
+    q_proj = self._scrf(q.view(N, H*C), edge_index).view(-1, H, C)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 81, in _scrf
+    return self.fastfood(x)
+           ^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/fastfood_fft.py", line 45, in forward
+    raise ValueError(f"Expected input dimension {self.input_dim}, got {x.shape[-1]}")
+ValueError: Expected input dimension 64, got 128
+warning: No `requires-python` value found in the workspace. Defaulting to `>=3.11`.
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/outdated/__init__.py:36: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+wandb: WARNING Using a boolean value for 'reinit' is deprecated. Use 'return_previous' or 'finish_previous' instead.
+wandb: Tracking run with wandb version 0.21.4
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/wandb/offline-run-20250918_115549-xm4iklhi
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 269, in <module>
+    main()
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 210, in main
+    result = run_single_experiment(run_config, device, run_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/main.py", line 111, in run_single_experiment
+    out = model(data.x.to(device), data.edge_index.to(device), epoch=epoch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1879, in _call_impl
+    return inner()
+           ^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1827, in inner
+    result = forward_call(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 157, in forward
+    x = layer(x, edge_index, epoch=epoch)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 109, in forward
+    q_proj = self._scrf(q.view(N, H*C), edge_index).view(-1, H, C)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/train.py", line 81, in _scrf
+    return self.fastfood(x)
+           ^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/fastfood_fft.py", line 59, in forward
+    x_transformed = self._walsh_hadamard_transform(x_diag)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/toma/pt80-1-a-28/_work/experiment_matsuzawa_250918_4/experiment_matsuzawa_250918_4/src/fastfood_fft.py", line 77, in _walsh_hadamard_transform
+    return torch.fft.dct(x, norm='ortho', dim=-1)
+           ^^^^^^^^^^^^^
+AttributeError: module 'torch.fft' has no attribute 'dct'

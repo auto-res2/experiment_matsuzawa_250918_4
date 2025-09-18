@@ -7,6 +7,10 @@ import random
 import time
 import wandb
 import threading
+
+# Configure wandb for offline mode to avoid authentication issues
+os.environ['WANDB_MODE'] = 'offline'
+
 from ptflops import get_model_complexity_info
 
 # Assuming pynvml is installed for energy monitoring

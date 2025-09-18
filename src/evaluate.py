@@ -157,7 +157,6 @@ def run_evaluation(exp_name, results_log, output_dir):
         f.write(results_json)
 
     print(f"Evaluation results for {exp_name} saved to {json_path}")
-    print("--- Results JSON --- G B
-" + results_json)
-    print("--- End Evaluation --- G B
-")
+    print("--- Results JSON ---")
+    print(results_json)
+    print("--- End Evaluation ---")

@@ -14,7 +14,7 @@ def get_data(name, root='data/'):
 
     if os.path.exists(processed_path):
         print(f"Loading cached dataset: {name}")
-        data = torch.load(processed_path)
+        data = torch.load(processed_path, weights_only=False)
         return data
     
     print(f"Downloading and processing dataset: {name}")
