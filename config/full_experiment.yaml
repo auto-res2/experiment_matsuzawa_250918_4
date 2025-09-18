@@ -1,0 +1,62 @@
+# This file defines the full experimental suite. 
+# It is intended to be run with a script that iterates through these configurations.
+# Example: python run_all_experiments.py --config full_experiment.yaml
+# This is a meta-config file, not a single runnable config.
+
+experiment_1:
+  # End-to-End Accuracy & Speed Benchmark
+  params:
+    model_name: ['resnet50', 'convnext_tiny', 'deit_small', 'mobilevit_xs']
+    method_name: ['source', 'adabn', 'tent', 'post', 'flash_tt']
+    dataset_name: ['imagenet-c']
+    corruption: ['gaussian_noise', 'shot_noise', 'impulse_noise', 'defocus_blur', 'glass_blur', 'motion_blur', 'zoom_blur', 'snow', 'frost', 'fog', 'brightness', 'contrast', 'elastic_transform', 'pixelate', 'jpeg_compression']
+    severity: [5]
+    seed: [0, 1, 2]
+
+experiment_2:
+  # Controlled Shift Sensitivity Study
+  params:
+    model_name: ['convnext_tiny', 'deit_small']
+    method_name: ['flash_tt', 'flash_tt_kl_only', 'flash_tt_no_rho', 'fishmask']
+    dataset_name: ['synthetic']
+    shift_type: ['contrast', 'style_transfer', 'spectral_drift']
+    seed: [0, 1, 2, 3, 4]
+
+experiment_3:
+  # Safety & Ablation on Large Label Drift
+  params:
+    model_name: ['deit_small']
+    method_name: ['flash_tt', 'flash_tt_no_safeguard', 'flash_tt_m1m2_only', 'post']
+    dataset_name: ['imagenet-v2_permuted']
+    seed: [0, 1, 2]
+
+# --- Base configurations to be merged ---
+
+base_config:
+  run:
+    batch_size: 64 # Lowered for broader compatibility, adjust for A100
+    max_batches: None # Run full dataset
+    output_dir: '.research/iteration1/full_experiment_outputs'
+
+model_configs:
+  resnet50: { name: 'resnet50', lora_rank: None }
+  convnext_tiny: { name: 'convnext_tiny', lora_rank: None }
+  deit_small: { name: 'deit_small', lora_rank: 16 } # Rank 16 LoRA
+  mobilevit_xs: { name: 'mobilevit_xs', lora_rank: None }
+
+data_configs:
+  imagenet-c: { name: 'imagenet-c' }
+  synthetic: { name: 'synthetic' }
+  imagenet-v2_permuted: { name: 'imagenet-v2', permute_labels: true, permute_count: 30000 }
+
+method_configs:
+  source: { name: 'source' }
+  adabn: { name: 'adabn' }
+  tent: { name: 'tent', lr: 0.00025 }
+  post: { name: 'post', lr: 0.001 }
+  fishmask: { name: 'flash_tt', delta: 1000 } # Simulate fishmask (KL only, high thresh)
+  flash_tt: { name: 'flash_tt', lr: 0.00025, delta: 0.5, power_iter: 2, no_safeguard: false }
+  flash_tt_kl_only: { name: 'flash_tt', lr: 0.00025, delta: 0.5, power_iter: 0 } # Power iter 0 disables spectral trigger
+  flash_tt_no_rho: { name: 'flash_tt', lr: 0.00025, delta: 0.5, power_iter: 2 } # rho logic is inside evaluate.py, not controlled here easily.
+  flash_tt_no_safeguard: { name: 'flash_tt', lr: 0.00025, delta: 0.5, power_iter: 2, no_safeguard: true }
+  flash_tt_m1m2_only: { name: 'flash_tt', lr: 0.00025, delta: 0.5, power_iter: 2 } # replay logic is inside evaluate.py

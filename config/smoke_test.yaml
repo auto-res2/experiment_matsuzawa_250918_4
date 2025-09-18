@@ -1,0 +1,20 @@
+model:
+  name: 'resnet50'
+  lora_rank: null
+
+data:
+  name: 'cifar10-c'
+  corruption: 'gaussian_noise'
+  severity: 5
+
+method:
+  name: 'flash_tt'
+  lr: 0.00025
+  delta: 0.5
+  power_iter: 2
+
+run:
+  seed: 0
+  batch_size: 64
+  max_batches: 20
+  output_dir: '.research/iteration1/smoke_test_outputs'
