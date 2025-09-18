@@ -1,44 +1,27 @@
-=== [PHASE 1/2] Smoke test start Thu Sep 18 11:43:16 AM UTC 2025 ===
-=== [PHASE 1/2] Smoke test PASSED Thu Sep 18 11:43:41 AM UTC 2025 ===
-=== [PHASE 1/2] Smoke test start Thu Sep 18 11:43:55 AM UTC 2025 ===
+=== [PHASE 2/2] Full experiment start Thu Sep 18 01:09:27 PM UTC 2025 ===
 
 ===== Starting Experiment 1: End-to-End Benchmark =====
 
---- Running: exp1_Flickr_SCoRe-GNN_seed42 ---
-Downloading and processing dataset: Flickr
-=== [PHASE 1/2] Smoke test PASSED Thu Sep 18 11:44:18 AM UTC 2025 ===
-=== [PHASE 1/2] Smoke test start Thu Sep 18 11:44:53 AM UTC 2025 ===
+--- Running: exp1_ogbn-products_GAT_seed42 ---
+Downloading and processing dataset: ogbn-products
+ogbn-products has been updated.
+Will you update the dataset now? (y/N)
 
-===== Starting Experiment 1: End-to-End Benchmark =====
+Automatically answering 'y' for dataset download
+This will download 1.38GB. Will you proceed? (y/N)
 
---- Running: exp1_Flickr_SCoRe-GNN_seed42 ---
-Loading cached dataset: Flickr
-=== [PHASE 1/2] Smoke test PASSED Thu Sep 18 11:45:01 AM UTC 2025 ===
-=== [PHASE 1/2] Smoke test start Thu Sep 18 11:45:27 AM UTC 2025 ===
+Automatically answering 'y' for dataset download
+Downloading http://snap.stanford.edu/ogb/data/nodeproppred/products.zip
+Extracting data/ogbn-products/products.zip
+Loading necessary files...
+This might take a while.
+Processing graphs...
+Converting graphs into PyG objects...
+Saving...
+Failed to download or process dataset ogbn-products. Error: Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you trust the source of the checkpoint[0m. 
+	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+	WeightsUnpickler error: Unsupported global: GLOBAL torch_geometric.data.data.DataEdgeAttr was not an allowed global by default. Please use `torch.serialization.add_safe_globals([torch_geometric.data.data.DataEdgeAttr])` or the `torch.serialization.safe_globals([torch_geometric.data.data.DataEdgeAttr])` context manager to allowlist this global if you trust this class/function.
 
-===== Starting Experiment 1: End-to-End Benchmark =====
-
---- Running: exp1_Flickr_SCoRe-GNN_seed42 ---
-Loading cached dataset: Flickr
-Could not compute FLOPs: new_empty(): argument 'size' failed to unpack the object at pos 2 with error "type must be tuple of ints,but got Tensor"
-=== [PHASE 1/2] Smoke test start Thu Sep 18 11:48:18 AM UTC 2025 ===
-
-===== Starting Experiment 1: End-to-End Benchmark =====
-
---- Running: exp1_Flickr_SCoRe-GNN_seed42 ---
-Loading cached dataset: Flickr
-Could not compute FLOPs: new_empty(): argument 'size' failed to unpack the object at pos 2 with error "type must be tuple of ints,but got Tensor"
-=== [PHASE 1/2] Smoke test start Thu Sep 18 11:50:29 AM UTC 2025 ===
-
-===== Starting Experiment 1: End-to-End Benchmark =====
-
---- Running: exp1_Flickr_SCoRe-GNN_seed42 ---
-Loading cached dataset: Flickr
-Could not compute FLOPs: new_empty(): argument 'size' failed to unpack the object at pos 2 with error "type must be tuple of ints,but got Tensor"
-=== [PHASE 1/2] Smoke test start Thu Sep 18 11:55:42 AM UTC 2025 ===
-
-===== Starting Experiment 1: End-to-End Benchmark =====
-
---- Running: exp1_Flickr_SCoRe-GNN_seed42 ---
-Loading cached dataset: Flickr
-Could not compute FLOPs: new_empty(): argument 'size' failed to unpack the object at pos 2 with error "type must be tuple of ints,but got Tensor"
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+=== [PHASE 2/2] Full experiment end Thu Sep 18 01:12:42 PM UTC 2025 ===

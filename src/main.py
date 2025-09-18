@@ -111,7 +111,8 @@ def run_single_experiment(config, device, run_id):
         out = model(data.x.to(device), data.edge_index.to(device), epoch=epoch)
         
         train_mask = data.train_mask.to(device)
-        loss = criterion(out[train_mask], data.y[train_mask].to(device).float() if isinstance(criterion, torch.nn.BCEWithLogitsLoss) else data.y[train_mask].to(device))
+        y_train = data.y[data.train_mask].to(device)  # Index on CPU, then move to device
+        loss = criterion(out[train_mask], y_train.float() if isinstance(criterion, torch.nn.BCEWithLogitsLoss) else y_train)
         
         loss.backward()
         optimizer.step()

@@ -7,6 +7,16 @@ import networkx as nx
 from torch_geometric.utils import from_networkx
 import numpy as np
 
+# Monkey patch to automatically answer 'y' for OGB dataset downloads
+def auto_yes_input(prompt):
+    print(prompt)
+    print("Automatically answering 'y' for dataset download")
+    return 'y'
+
+# Apply monkey patch for OGB downloads
+import builtins
+original_input = builtins.input
+
 def get_data(name, root='data/'):
     path = os.path.join(root, name)
     os.makedirs(path, exist_ok=True)
@@ -14,14 +24,27 @@ def get_data(name, root='data/'):
 
     if os.path.exists(processed_path):
         print(f"Loading cached dataset: {name}")
-        data = torch.load(processed_path, weights_only=False)
+        try:
+            data = torch.load(processed_path, weights_only=False)
+        except Exception as e:
+            print(f"Failed to load cached data with weights_only=False: {e}")
+            # If weights_only=False fails, allow unsafe globals for PyG data structures
+            import torch_geometric.data.data
+            torch.serialization.add_safe_globals([torch_geometric.data.data.DataEdgeAttr])
+            data = torch.load(processed_path, weights_only=True)
         return data
     
     print(f"Downloading and processing dataset: {name}")
     try:
         if name.startswith('ogbn'):
-            dataset = PygNodePropPredDataset(name=name, root=path, transform=T.ToUndirected())
-            data = dataset[0]
+            # Temporarily replace input function for OGB datasets
+            builtins.input = auto_yes_input
+            try:
+                dataset = PygNodePropPredDataset(name=name, root=path, transform=T.ToUndirected())
+                data = dataset[0]
+            finally:
+                # Restore original input function
+                builtins.input = original_input
         elif name == 'Flickr':
             dataset = Flickr(root=path, transform=T.ToUndirected())
             data = dataset[0]

@@ -32,6 +32,7 @@ def evaluate_model(model, data, mask, device):
     model.eval()
     with torch.no_grad():
         data = data.to(device)
+        mask = mask.to(device)
         out = model(data.x, data.edge_index)
         out = out[mask]
         y_true = data.y[mask]
@@ -58,7 +59,10 @@ def evaluate_model(model, data, mask, device):
 
 def plot_pareto_front(results_df, output_dir):
     plt.figure(figsize=(10, 8))
-    sns.scatterplot(data=results_df, x='energy_joules_mean', y='accuracy_mean', hue='model', style='dataset', s=200)
+    # Use the correct column names from aggregation
+    x_col = 'total_energy_mean' if 'total_energy_mean' in results_df.columns else 'total_energy'
+    y_col = 'final_accuracy_mean' if 'final_accuracy_mean' in results_df.columns else 'final_accuracy'
+    sns.scatterplot(data=results_df, x=x_col, y=y_col, hue='model', style='dataset', s=200)
     plt.title('Experiment 1: Pareto Front (Accuracy vs. Energy)')
     plt.xlabel('Cumulative Energy (Joules)')
     plt.ylabel('Test Accuracy / ROC-AUC')
@@ -72,7 +76,8 @@ def plot_synthetic_results(results_df, output_dir):
     for h in results_df['h'].unique():
         plt.figure(figsize=(10, 6))
         subset = results_df[results_df['h'] == h]
-        sns.lineplot(data=subset, x='p_rewire', y='accuracy_mean', hue='model', style='d', marker='o')
+        y_col = 'final_accuracy_mean' if 'final_accuracy_mean' in results_df.columns else 'final_accuracy'
+        sns.lineplot(data=subset, x='p_rewire', y=y_col, hue='model', style='d', marker='o')
         plt.title(f'Experiment 2: Accuracy vs. Rewiring (Homophily h={h})')
         plt.xlabel('Rewiring Probability (p_rewire)')
         plt.ylabel('Test Accuracy')
@@ -81,17 +86,25 @@ def plot_synthetic_results(results_df, output_dir):
         plt.close()
 
 def plot_ablation_bars(results_df, output_dir):
-    metrics_to_plot = ['accuracy_mean', 'ece_mean', 'peak_mem_mb_mean', 'hub_msgs_mean']
-    for metric in metrics_to_plot:
-        plt.figure(figsize=(12, 7))
-        sns.barplot(data=results_df, x='dataset', y=metric, hue='variant')
-        plt.title(f'Experiment 3: Ablation Study - {metric}')
-        plt.ylabel(metric)
-        plt.xlabel('Dataset')
-        plt.xticks(rotation=15)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'images', f'exp3_ablation_{metric}.pdf'))
-        plt.close()
+    # Map desired metrics to actual column names
+    metric_mapping = {
+        'accuracy_mean': 'final_accuracy_mean' if 'final_accuracy_mean' in results_df.columns else 'final_accuracy',
+        'ece_mean': 'final_ece_mean' if 'final_ece_mean' in results_df.columns else 'final_ece',
+        'peak_mem_mb_mean': 'peak_memory_mb_mean' if 'peak_memory_mb_mean' in results_df.columns else 'peak_memory_mb',
+        'hub_msgs_mean': 'final_hub_msgs_mean' if 'final_hub_msgs_mean' in results_df.columns else 'final_hub_msgs'
+    }
+    
+    for display_name, metric in metric_mapping.items():
+        if metric in results_df.columns:
+            plt.figure(figsize=(12, 7))
+            sns.barplot(data=results_df, x='dataset', y=metric, hue='variant')
+            plt.title(f'Experiment 3: Ablation Study - {display_name}')
+            plt.ylabel(display_name)
+            plt.xlabel('Dataset')
+            plt.xticks(rotation=15)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, 'images', f'exp3_ablation_{display_name}.pdf'))
+            plt.close()
 
 def run_evaluation(exp_name, results_log, output_dir):
     print(f"--- Running Evaluation for {exp_name} ---")
