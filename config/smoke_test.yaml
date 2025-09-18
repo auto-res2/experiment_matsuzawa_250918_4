@@ -1,0 +1,39 @@
+globals:
+  device: 'cuda'
+  wandb_project: 'SCoRe-GNN-Smoke-Test'
+  seeds: [42]
+
+experiment_1:
+  datasets: ['Flickr']
+  models: ['SCoRe-GNN']
+  training:
+    epochs: 2
+    patience: 2
+    lr: 0.001
+    weight_decay: 0.0005
+  model_params:
+    hidden_dim: 64
+    layers: 2
+    heads: 2
+
+experiment_2:
+  d: [4]
+  h: [0.5]
+  p_rewire: [0.25]
+  models: ['SCoRe-GNN']
+  training:
+    epochs: 2
+    patience: 2
+    lr: 0.001
+    weight_decay: 0.0005
+
+experiment_3:
+  datasets: ['Flickr']
+  variants: ['full', 'no_calr']
+  sweep_lazy_T: [2]
+  sweep_conf_tau: [0.9]
+  training:
+    epochs: 2
+    patience: 2
+    lr: 0.001
+    weight_decay: 0.0005

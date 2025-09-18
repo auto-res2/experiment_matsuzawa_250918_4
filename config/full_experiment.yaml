@@ -1,0 +1,43 @@
+globals:
+  device: 'cuda:0'
+  wandb_project: 'SCoRe-GNN-Paper-Replication'
+  seeds: [42, 2023, 1, 7, 11]
+
+experiment_1:
+  datasets: ['ogbn-products', 'ogbn-proteins', 'peptides-functional', 'Flickr', 'Reddit']
+  models: ['GAT', 'AdaFlash', 'BigBird-GNN', 'BlockDiag-TransGNN', 'SCoRe-GNN']
+  training:
+    epochs: 400
+    patience: 30
+    lr: 0.003
+    weight_decay: 0.0005
+  model_params:
+    hidden_dim: 256
+    layers: 4
+    heads: 4
+    dropout: 0.5
+
+experiment_2:
+  d: [4, 16, 64, 128]
+  h: [0.1, 0.5, 0.9]
+  p_rewire: [0, 0.25, 0.5, 0.75]
+  models: ['AdaFlash', 'SCoRe-GNN', 'SCoRe-no-SCRF']
+  training:
+    epochs: 200
+    patience: 20
+    lr: 0.003
+    weight_decay: 0.0005
+  model_params:
+    hidden_dim: 256
+    layers: 4
+
+experiment_3:
+  datasets: ['ogbn-products', 'ogbn-proteins']
+  variants: ['full', 'no_calr', 'no_qbala', 'no_calr_qbala']
+  sweep_lazy_T: [0, 2, 5, 10]
+  sweep_conf_tau: [0.8, 0.85, 0.9, 0.95]
+  training:
+    epochs: 400
+    patience: 30
+    lr: 0.003
+    weight_decay: 0.0005
