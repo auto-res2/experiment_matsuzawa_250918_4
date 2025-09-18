@@ -505,7 +505,461 @@
     }
   ],
   "new_method": {
-    "method": "Open Problems: P-1  Degree imbalance is not the only reason why some edges can be safely approximated or skipped; semantics (class uncertainty, homophily level, label sparsity) also matter but are ignored.\nP-2  Existing bounds rely on the random–feature estimator being unbiased and variance-controlled, which fails with practical structured kernels (RoPE, SRHT, Fastfood) or when features are re-used across epochs.\nP-3  AdaFlash still has to materialise O(deg) messages for every hub at every epoch even if the final prediction is already confident, wasting FLOPs and energy during late training.\nP-4  No framework combines adaptive hybrid attention with activation-compression; memory is dominated by key / value tensors although compute is optimised.\nP-5  Recent Sparse-Transformer-GNN layers (e.g. BigBird-GNN, BlockDiag-Trans) offer a different accuracy–efficiency trade-off; the field lacks a unified comparison and a theory explaining when each family wins.\nMethods: We propose SCoRe-GNN (Spectrum-Conditioned Re-usable Attention for Graphs) – a superset of AdaFlash that adds three orthogonal ideas.\n\nM-1  Spectrum-Conditioned Random Features (SCRF)\n  •  For each layer we estimate a cheap trace of the local Laplacian ( Hutch++ on 256 probe vectors ).  The trace gives an estimate of neighbourhood bandwidth λ̂_v.\n  •  The kernel length-scale σ(v) = c\\/√λ̂_v is fed into a Fastfood projection ϕ_{σ(v)}(·) that is both structured (O(d log d)) and degree-agnostic.  We prove a uniform variance bound that no longer needs the ‘unbiased’ assumption.\n\nM-2  Confidence-Aware Lazy Routing (CALR)\n  •  During forward pass we cache γ_v = max_softmax(logits_v).  If γ_v > τ_conf and remained so for T_lazy epochs, we freeze the routing for node v: only its exact core is recomputed; LINEAR and DROP edges reuse the last stored message.\n  •  A small JIT kernel streams these frozen messages from a half-precision ring buffer, cutting hub-wise FLOPs by up to 70 % late in training while keeping gradients unbiased via periodic refresh.\n\nM-3  Quantised Balanced Attention (Q-BalA)\n  •  We integrate GACT-style 3-bit activation compression inside the MessagePassing hooks but restrict it to K,V and intermediate φ(·) tensors; queries stay in FP16 to preserve BalO dynamics.\n  •  Compression level is decided per-layer by the same knapsack loss used for routing, giving one joint budget β_time + β_mem.\n\nTheory  We extend AdaFlash’s ε-node error to (ε,δ)-probably-approximately-correct guarantees under dependent random features and frozen messages.  The key is a martingale concentration bound on reuse frequency.\n\nAPI  SCoReConv inherits AdaFlashConv, plus <80 LoC for SCRF and CALR, and an optional import gact.set_optimization_level('L2').\nExperimental Setup: Datasets  All from AdaFlash + ogbn-proteins (heterophilic, low-hub) and LRGB-Peptides (graph regression).\nBaselines  (1) GAT, (2) AdaFlash, (3) BigBird-GNN (block sparse), (4) BlockDiag-TransGNN, (5) SCoRe-GNN.\nMetrics  previous +   • energy & FLOPs after epoch 200 (late-training efficiency)   • calibration error (ECE) to test the effect of CALR   • memory peak incl. activations.\nAblations  −SCRF, −CALR, −Q-BalA, reuse period T_lazy ∈ {0,2,5}.\nExperimental Code: # pseudo-snippet\nfrom torch_geometric.nn import MessagePassing\nfrom fastfood_fft import Fastfood\nclass SCoReConv(AdaFlashConv):\n    def __init__(self,*a,trace_bits=256,lazy_T=5,conf_tau=0.9,q_bits=3,**kw):\n        super().__init__(*a,**kw); self.trace_bits=trace_bits; self.lazy_T=lazy_T\n        self.conf_tau=conf_tau; self.buff={}; self.fastfood=Fastfood(self.out_dim)\n        gact.set_optimization_level(f'L{q_bits}')\n    def _scrf(self,x,deg):\n        # Hutch++ trace estimate\n        probe=torch.randn(self.trace_bits,x.size(0),device=x.device)\n        lap_trace=(probe*(deg*probe-probe)).sum()/self.trace_bits\n        sigma=(self.out_dim/lap_trace).sqrt().clamp(min=0.1)\n        return self.fastfood(x/sigma)\n    def message(self,q_i,k_j,v_j,idx,deg_v,_):\n        phi_q=self._scrf(q_i,deg_v[idx]); phi_k=self._scrf(k_j,deg_v[idx])\n        return super().message(q_i,k_j,v_j,deg_v,idx,None,None)\n    def forward(self,x,edge_index,epoch=0):\n        conf = (x.softmax(-1).amax(-1) if self.training else None)\n        freeze = (conf>self.conf_tau) if self.training else None\n        # skip aggregation for frozen hubs except every self.lazy_T epochs\n        if self.training and epoch%self.lazy_T and freeze.any():\n            out=x.clone(); out[freeze]=self.buff.get('msg',x)[freeze]; return out\n        out=super().forward(x,edge_index)\n        if self.training: self.buff['msg']=out.detach()\n        return out\nExpected Result: •  On ogbn-products SCoRe cuts additional 32 % FLOPs vs AdaFlash after epoch 150; total energy ↓58 % vs vanilla GAT.\n•  Test accuracy within ±0.1 % of AdaFlash; on low-hub ogbn-proteins gains 0.5 % due to SCRF.\n•  Peak GPU memory ↓64 % vs GAT and ↓28 % vs AdaFlash thanks to Q-BalA.\n•  Calibration ECE improves from 4.8 % (AdaFlash) to 3.1 % (SCoRe) due to confidence-aware routing.\n•  Theory: empirical ‖H_full−H_score‖₂ ≤0.04 with δ<0.05 matches bound.\nExpected Conclusion: SCoRe-GNN shows that efficiency of graph attention can be boosted beyond degree heuristics by conditioning random features on spectral bandwidth, re-using messages for already confident hubs, and co-optimising activation memory.  It unifies hybrid attention, calibration-driven skipping, and compression in one layer, delivers state-of-the-art late-training efficiency, and extends approximation theory to realistic dependent features.  The public PyG layer and scripts facilitate fair comparison with emerging sparse-transformer GNNs and offer practitioners a resource-aware switch for both compute- and memory-limited environments."
+    "method": "Open Problems: P-1  Degree imbalance is not the only reason why some edges can be safely approximated or skipped; semantics (class uncertainty, homophily level, label sparsity) also matter but are ignored.\nP-2  Existing bounds rely on the random–feature estimator being unbiased and variance-controlled, which fails with practical structured kernels (RoPE, SRHT, Fastfood) or when features are re-used across epochs.\nP-3  AdaFlash still has to materialise O(deg) messages for every hub at every epoch even if the final prediction is already confident, wasting FLOPs and energy during late training.\nP-4  No framework combines adaptive hybrid attention with activation-compression; memory is dominated by key / value tensors although compute is optimised.\nP-5  Recent Sparse-Transformer-GNN layers (e.g. BigBird-GNN, BlockDiag-Trans) offer a different accuracy–efficiency trade-off; the field lacks a unified comparison and a theory explaining when each family wins.\nMethods: We propose SCoRe-GNN (Spectrum-Conditioned Re-usable Attention for Graphs) – a superset of AdaFlash that adds three orthogonal ideas.\n\nM-1  Spectrum-Conditioned Random Features (SCRF)\n  •  For each layer we estimate a cheap trace of the local Laplacian ( Hutch++ on 256 probe vectors ).  The trace gives an estimate of neighbourhood bandwidth λ̂_v.\n  •  The kernel length-scale σ(v) = c\\/√λ̂_v is fed into a Fastfood projection ϕ_{σ(v)}(·) that is both structured (O(d log d)) and degree-agnostic.  We prove a uniform variance bound that no longer needs the ‘unbiased’ assumption.\n\nM-2  Confidence-Aware Lazy Routing (CALR)\n  •  During forward pass we cache γ_v = max_softmax(logits_v).  If γ_v > τ_conf and remained so for T_lazy epochs, we freeze the routing for node v: only its exact core is recomputed; LINEAR and DROP edges reuse the last stored message.\n  •  A small JIT kernel streams these frozen messages from a half-precision ring buffer, cutting hub-wise FLOPs by up to 70 % late in training while keeping gradients unbiased via periodic refresh.\n\nM-3  Quantised Balanced Attention (Q-BalA)\n  •  We integrate GACT-style 3-bit activation compression inside the MessagePassing hooks but restrict it to K,V and intermediate φ(·) tensors; queries stay in FP16 to preserve BalO dynamics.\n  •  Compression level is decided per-layer by the same knapsack loss used for routing, giving one joint budget β_time + β_mem.\n\nTheory  We extend AdaFlash’s ε-node error to (ε,δ)-probably-approximately-correct guarantees under dependent random features and frozen messages.  The key is a martingale concentration bound on reuse frequency.\n\nAPI  SCoReConv inherits AdaFlashConv, plus <80 LoC for SCRF and CALR, and an optional import gact.set_optimization_level('L2').\nExperimental Setup: Datasets  All from AdaFlash + ogbn-proteins (heterophilic, low-hub) and LRGB-Peptides (graph regression).\nBaselines  (1) GAT, (2) AdaFlash, (3) BigBird-GNN (block sparse), (4) BlockDiag-TransGNN, (5) SCoRe-GNN.\nMetrics  previous +   • energy & FLOPs after epoch 200 (late-training efficiency)   • calibration error (ECE) to test the effect of CALR   • memory peak incl. activations.\nAblations  −SCRF, −CALR, −Q-BalA, reuse period T_lazy ∈ {0,2,5}.\nExperimental Code: # pseudo-snippet\nfrom torch_geometric.nn import MessagePassing\nfrom fastfood_fft import Fastfood\nclass SCoReConv(AdaFlashConv):\n    def __init__(self,*a,trace_bits=256,lazy_T=5,conf_tau=0.9,q_bits=3,**kw):\n        super().__init__(*a,**kw); self.trace_bits=trace_bits; self.lazy_T=lazy_T\n        self.conf_tau=conf_tau; self.buff={}; self.fastfood=Fastfood(self.out_dim)\n        gact.set_optimization_level(f'L{q_bits}')\n    def _scrf(self,x,deg):\n        # Hutch++ trace estimate\n        probe=torch.randn(self.trace_bits,x.size(0),device=x.device)\n        lap_trace=(probe*(deg*probe-probe)).sum()/self.trace_bits\n        sigma=(self.out_dim/lap_trace).sqrt().clamp(min=0.1)\n        return self.fastfood(x/sigma)\n    def message(self,q_i,k_j,v_j,idx,deg_v,_):\n        phi_q=self._scrf(q_i,deg_v[idx]); phi_k=self._scrf(k_j,deg_v[idx])\n        return super().message(q_i,k_j,v_j,deg_v,idx,None,None)\n    def forward(self,x,edge_index,epoch=0):\n        conf = (x.softmax(-1).amax(-1) if self.training else None)\n        freeze = (conf>self.conf_tau) if self.training else None\n        # skip aggregation for frozen hubs except every self.lazy_T epochs\n        if self.training and epoch%self.lazy_T and freeze.any():\n            out=x.clone(); out[freeze]=self.buff.get('msg',x)[freeze]; return out\n        out=super().forward(x,edge_index)\n        if self.training: self.buff['msg']=out.detach()\n        return out\nExpected Result: •  On ogbn-products SCoRe cuts additional 32 % FLOPs vs AdaFlash after epoch 150; total energy ↓58 % vs vanilla GAT.\n•  Test accuracy within ±0.1 % of AdaFlash; on low-hub ogbn-proteins gains 0.5 % due to SCRF.\n•  Peak GPU memory ↓64 % vs GAT and ↓28 % vs AdaFlash thanks to Q-BalA.\n•  Calibration ECE improves from 4.8 % (AdaFlash) to 3.1 % (SCoRe) due to confidence-aware routing.\n•  Theory: empirical ‖H_full−H_score‖₂ ≤0.04 with δ<0.05 matches bound.\nExpected Conclusion: SCoRe-GNN shows that efficiency of graph attention can be boosted beyond degree heuristics by conditioning random features on spectral bandwidth, re-using messages for already confident hubs, and co-optimising activation memory.  It unifies hybrid attention, calibration-driven skipping, and compression in one layer, delivers state-of-the-art late-training efficiency, and extends approximation theory to realistic dependent features.  The public PyG layer and scripts facilitate fair comparison with emerging sparse-transformer GNNs and offer practitioners a resource-aware switch for both compute- and memory-limited environments.",
+    "experimental_design": {
+      "experiment_strategy": "Experiment 1 – End-to-End Benchmark Suite (effectiveness in the wild)\n-------------------------------------------------------------\nGoal: Show that SCoRe-GNN dominates the accuracy-vs-efficiency Pareto curve over strong baselines on real workloads.\n\nSetup\n1. Datasets: ogbn-products, ogbn-proteins, LRGB-Peptides, Flickr, Reddit.\n2. Models: GAT, AdaFlash, BigBird-GNN, BlockDiag-TransGNN, SCoRe-GNN.\n3. Hardware: single NVIDIA A100-80GB, fp16 mixed precision; identical optimiser, LR‐schedule, early-stop on val ACC.\n4. Metrics (logged every epoch):\n   • Top-1/ROC-AUC (task dependent) \n   • Expected Calibration Error (ECE)\n   • Wall-clock time/epoch and cumulative Joules (nvml)\n   • MACs/epoch (ptflops) and peak GPU-mem (torch.cuda.max_memory_allocated).\n\nHypotheses & Success Criteria\nH1: For every dataset SCoRe reaches ≥ AdaFlash accuracy within 3% energy of the sparsest baseline.\nH2: After epoch 200 SCoRe reduces MACs by ≥30 % vs AdaFlash (due to CALR) and peak-mem by ≥25 % vs GAT (due to Q-BalA).\n\nWhat Positive Results Demonstrate\n• Validates that the three orthogonal ideas combine without harming accuracy.\n• Confirms that spectral conditioning and lazy routing translate to tangible savings under industrial-scale graphs.\n\n-------------------------------------------------------------\nExperiment 2 – Controlled Spectrum & Homophily Study (isolating SCRF)\n-------------------------------------------------------------\nGoal: Prove that Spectrum-Conditioned Random Features, not degree heuristics, drive the accuracy gain on hard spectra.\n\nSetup\n1. Synthetic graph generator that independently sweeps: \n   (a) Average degree (4–128), \n   (b) Homophily h∈[0,1], \n   (c) Laplacian bandwidth λ̄ by rewiring edges with high-frequency noise.\n2. Models: AdaFlash (baseline), SCoRe-GNN, and “SCoRe-no-SCRF” (SCRF replaced by fixed-σ Fastfood).\n3. 5 random seeds, 10-class node classification with 5 % label rate.\n4. Report: test accuracy, variance of random-feature estimator (measured as ‖K̂−K‖_F/K), and per-node σ selected by SCRF.\n\nHypotheses & Success Criteria\nH3: Under high-frequency (large λ̄) or heterophilic (low h) settings, SCoRe improves accuracy by ≥4 pp over both variants that lack SCRF.\nH4: Estimator variance grows sub-linearly with λ̄ only for SCRF, matching the proved O(λ̄⁻¹) bound.\n\nWhat Positive Results Demonstrate\n• Direct evidence that the spectral trace governs the ideal kernel scale, validating the theoretical variance bound.\n• Shows gains are orthogonal to degree distribution, answering Open Problem P-1.\n\n-------------------------------------------------------------\nExperiment 3 – Ablation of Confidence-Aware Lazy Routing & Quantised Attention (late-training behaviour)\n-------------------------------------------------------------\nGoal: Quantify how CALR + Q-BalA cut FLOPs/energy without hurting convergence or calibration.\n\nSetup\n1. Use ogbn-products (hub-heavy) and ogbn-proteins (hub-light).\n2. Train SCoRe under four variants: \n   (i) Full model; \n   (ii) −CALR (T_lazy=0); \n   (iii) −Q-BalA (all FP16); \n   (iv) −{CALR,Q-BalA}.\n3. Track per-epoch: hub-message count, FLOPs, energy, ECE, and accuracy.\n4. Sweep T_lazy∈{0,2,5,10}.  Same seeds & hyper-params.\n\nHypotheses & Success Criteria\nH5: With CALR, hub-message count decays >60 % after epoch 150 while accuracy drop ≤0.2 pp.\nH6: ECE is reduced by ≥25 % relative (confident nodes stop fluctuating).\nH7: 3-bit Q-BalA lowers peak activation memory ≥35 % with <1 pp accuracy loss.\n\nWhat Positive Results Demonstrate\n• Confirms theory that frozen messages keep gradients unbiased yet save compute (addresses P-3).\n• Shows compression can be decided jointly with routing for memory savings (addresses P-4).\n\n-------------------------------------------------------------\nWhy Three Experiments Are Complementary\n1. Experiment 1 proves holistic superiority on realistic workloads.\n2. Experiment 2 isolates the spectral component, providing causal evidence for theoretical claims.\n3. Experiment 3 drills into the late-training regime and memory trade-offs, validating practical efficiency knobs.\n\nCollectively, success across all three axes would conclusively demonstrate that SCoRe-GNN solves the stated open problems and is a preferable drop-in replacement for existing graph attention layers.",
+      "experiment_details": "=================================================================\nExperiment 1 – End-to-End Benchmark Suite (effectiveness in the wild)\n=================================================================\n1. Goal\n   Show that SCoRe-GNN dominates the accuracy–efficiency Pareto frontier on five real-world benchmarks when trained under identical optimisation pipelines.\n\n2. Datasets and Tasks\n   • ogbn-products (node-classification, 47 classes, accuracy)\n   • ogbn-proteins (multi-label, ROC-AUC)\n   • LRGB-Peptides-Func (graph-classification, 10 classes, accuracy)\n   • Flickr (node-classification, 7 classes, accuracy)\n   • Reddit (node-classification, 41 classes, accuracy)\n   All datasets are fetched via PyG/OGB and stored on a lustre mount so I/O is not a bottleneck.\n\n3. Models\n   Main: SCoRe-GNN (ours, 4-layer, hidden=256)\n   Baselines: GAT, AdaFlash-GNN, BigBird-GNN (block-sparse = 64×64, global tokens=16), BlockDiag-TransGNN (diag size 128)\n   Note: All baselines are re-implemented in the same code-base (PyTorch 2.2 + PyG 2.5) and trained with mixed precision (torch.cuda.amp).†\n\n4. Pre-processing\n   • Continuous node features z-score normalised; categorical features → learned 64-d embeddings.\n   • Edges: remove self-loops, add symmetric edge if missing (undirected graphs); store CSR for sparse kernels.\n   • For ogbn-proteins we perform the standard feature aggregation (sum of one-hot amino acid types) before normalisation.\n\n5. Splits\n   • OGB official train/val/test masks.\n   • LRGB-Peptides: 10-fold scaffold split following Dwivedi 2023; we report mean±std over the folds.\n   • Flickr/Reddit: 50 k/30 k/remaining nodes split by chronological order to respect temporal OOD shift.\n\n6. Training Protocol\n   Optimiser: AdamW (β1 = 0.9, β2 = 0.999, weight_decay = 5e-4) \n   LR: cosine decay from 3e-3 with 5-epoch linear warm-up. \n   Batch size: full-graph for ogbn-products/proteins; mini-batch of 1024 sub-graphs (GraphSAINT edge sampler) for Reddit/Flickr; mini-batch of 32 graphs for LRGB.\n   Epoch budget: 400 epochs with early-stop if val metric does not improve 30 consecutive epochs (patience).\n   Seeds: 5 (42, 2023, 1, 7, 11). Report mean and 95 % CI. Select check-point by best validation metric, evaluate once on test.\n\n7. Evaluation Metrics (logged every epoch)\n   Primary: Accuracy or ROC-AUC (task dependent)\n   Secondary: ECE (15 bin), F1-macro, AUROC (when primary is accuracy) \n   Efficiency: wall-clock time/epoch, cumulative Joules via pynvml (sample @1 Hz), MACs/epoch via ptflops, peak GPU-memory (torch.cuda.max_memory_allocated).\n\n8. Comparisons & Statistical Tests\n   • Pairwise Wilcoxon signed-rank between SCoRe and each baseline across seeds (α = 0.05 Holm-Bonferroni).\n   • Pareto front constructed with accuracy–Joules axes; knee-point distance Δk reported.\n\n9. Hyper-parameter Sensitivity\n   Grid: {hidden ∈ [128, 256, 512], lr ∈ [1e-3, 3e-3, 1e-2], layers ∈ [2,4,6]}.  Random search for 30 trials; analyse variance contribution via ANOVA.  All models share the same grid to attribute gains to architecture, not lucky hyper-parameters.\n\n10. Robustness Probes\n   a. Feature noise: add Gaussian ε~N(0,0.1·σ_f) at test time.\n   b. Structure noise: randomly drop 10 % edges.\n   c. OOD split (Flickr, Reddit chronological) already covered.\n   Measure Δaccuracy; compute worst-case drop and area under robustness curve.\n\n11. Resource Reporting\n   • FLOPs: ptflops on forward graph ×2 (back-prop) aggregated per epoch.\n   • Energy: integrate P_gpu over time; convert to kWh.\n   • Cost: assume $2.88/h for on-demand A100-80GB, multiply by wall-clock.\n\n12. Example Code Snippet (launcher)\n```\nfrom experiments.launch import train_once, log_accelerator\ncfg = {\n    'model': 'SCoReConv',\n    'dataset': 'ogbn-products',\n    'hidden': 256,\n    'layers': 4,\n    'lr': 3e-3,\n    'lazy_T': 5,\n    'conf_tau': 0.9,\n}\nresults = train_once(cfg, seed=42)\nlog_accelerator(results)\n```\n†Implementation differences: BigBird-GNN block size tuned to fit 80 GB; BlockDiag baseline uses 128-wide diagonals to equalise parameter count.\n\n=================================================================\nExperiment 2 – Controlled Spectrum & Homophily Study (isolating SCRF)\n=================================================================\n1. Goal\n   Quantify the benefit of Spectrum-Conditioned Random Features (SCRF) under controlled spectral bandwidth and homophily, addressing Open Problem P-1.\n\n2. Synthetic Data Generator\n   • Begin with a 20 k-node random regular graph of degree d.\n   • Rewire edge (u,v) with probability p_rewire to a random node to increase Laplacian bandwidth λ̄.\n   • Assign node labels by a stochastic block model with homophily h; continuous 256-d features sampled from N(label-mean, I).\n   Sweep grid:\n       d ∈ {4, 16, 64, 128}\n       h ∈ {0.1, 0.5, 0.9}\n       p_rewire ∈ {0, 0.25, 0.5, 0.75}\n   For each triplet create 3 independent graphs (total 144 graphs).\n\n3. Models\n   • AdaFlash (baseline)\n   • SCoRe-GNN (ours)\n   • SCoRe-no-SCRF (σ fixed to global median of pair-wise distances)\n   All share identical CALR and Q-BalA settings to isolate SCRF.\n\n4. Data Splits & Repeats\n   • 80/10/10 random node split per graph.\n   • 5 seeds ⇒ 5×144 runs.\n\n5. Training Settings\n   • Same optimiser & LR as Exp-1; 200 epochs; early-stop patience 20.\n\n6. Metrics\n   Primary: test accuracy\n   Secondary: random-feature variance ρ = ‖K̂−K‖_F / ‖K‖_F (Monte-Carlo with 2 000 sampled node pairs)\n   Also log σ_v selected by SCRF.\n\n7. Success Criteria\n   H3: Under (p_rewire≥0.5 or h≤0.5) ⇒ SCoRe − baseline ≥ 4 pp.\n   H4: ρ grows sub-linear w.r.t p_rewire only for SCRF; linear regression slope ≤ 0.5.\n\n8. Robustness & Stress Tests\n   • Add feature noise N(0,0.2) to 25 % nodes; recompute gap.\n   • OOD: test on graph with unseen (d, h, p_rewire) triple; report transfer accuracy.\n\n9. Hyper-parameter Study\n   • Vary trace_bits ∈ {64, 128, 256, 512}\n   • Fit power-law ρ ∝ trace_bits^-α; expect α≈0.5 per Hutch++ theory.\n\n10. Example Code (generator)\n```\nfrom networkx.generators.random_graphs import random_regular_graph\nfrom torch_geometric.utils import from_networkx\n\ndef make_graph(d, p_rw, h, seed):\n    g = random_regular_graph(d, 20000, seed)\n    # edge rewiring\n    for (u,v) in list(g.edges()):\n        if rnd.random() < p_rw:\n            g.remove_edge(u,v)\n            g.add_edge(u, rnd.randint(0,19999))\n    data = from_networkx(g)\n    # labels & features omitted for brevity\n    return data\n```\n\n=================================================================\nExperiment 3 – Ablation of CALR & Q-BalA (late-training behaviour)\n=================================================================\n1. Goal\n   Measure compute/memory savings and calibration improvement from CALR and Q-BalA during late training.\n\n2. Datasets\n   • ogbn-products (hub-heavy)\n   • ogbn-proteins (hub-light, heterophilic)\n\n3. Variants\n   (i) Full SCoRe\n   (ii) –CALR (set lazy_T = 0)\n   (iii) –Q-BalA (gact off, FP16 activations)\n   (iv) –{CALR, Q-BalA}\n   Sweep lazy_T ∈ {0, 2, 5, 10} for (i).\n\n4. Training & Logging\n   • Identical hyper-parameters to Exp-1.\n   • Additional hooks record per-epoch:\n       – #hub-messages (nodes with deg>500)\n       – FLOPs (ptflops), energy, ECE, accuracy.\n       – Peak activation RAM (torch.cuda.max_memory_reserved).  \n   • Keep check-points every 20 epochs to allow retrospective analysis.\n\n5. Metrics & Success Criteria\n   H5: hub-message decay >60 % after epoch 150 with ≤0.2 pp accuracy loss.\n   H6: ECE reduction ≥25 % vs no-CALR.\n   H7: 3-bit Q-BalA reduces peak memory ≥35 % with <1 pp accuracy hit.\n\n6. Robustness to Routing Lag\n   • After convergence, force-refresh all frozen messages and run 5 extra epochs; record accuracy delta to verify unbiased gradient claim.\n\n7. Hyper-parameter Grid Search\n   • conf_tau ∈ {0.8, 0.85, 0.9, 0.95}\n   • lazy_T ∈ {2, 5, 10}\n   • q_bits ∈ {2, 3, 4}\n   Evaluate validation accuracy & FLOPs; build 3-D response surface.\n\n8. Example Code (CALR monitor)\n```\nfrom torch.cuda import Event, synchronize\n\nfor epoch in range(400):\n    start, end = Event(enable_timing=True), Event(enable_timing=True)\n    start.record()\n    loss = train_one_epoch(model, loader)\n    end.record(); synchronize()\n    time_ms = start.elapsed_time(end)\n    flows = model.counters['hub_msgs']\n    logger.log({'epoch': epoch, 'time_ms': time_ms, 'hub_msgs': flows})\n```\n\n=================================================================\nCommon Infrastructure & Notes\n=================================================================\n• All experiments run on a single NVIDIA A100 80 GB in exclusive-process mode; torch.backends.cuda.matmul.allow_tf32 = True.\n• DDP is not required but scripts are launcher-agnostic so future multi-GPU scaling is trivial.\n• Determinism: torch.use_deterministic_algorithms(True) where feasible; dropout seeds fixed.\n• FLOPs computed once per epoch from a representative batch to amortise overhead.\n• Energy measurement uses NVML power draw averaged over epoch duration.\n• All raw logs pushed to Weights & Biases; analysis notebooks regenerate every figure and table in the paper.\n• NO-FALLBACK: All datasets are publicly available via the links shipped with PyG/OGB; experiments abort with FileNotFoundError otherwise.\n",
+      "expected_models": [
+        "GAT",
+        "AdaFlash-GNN",
+        "BigBird-GNN",
+        "BlockDiag-TransGNN",
+        "SCoRe-GNN",
+        "SCoRe-no-SCRF"
+      ],
+      "expected_datasets": [
+        "ogbn-products",
+        "ogbn-proteins",
+        "LRGB-Peptides-Func",
+        "Flickr",
+        "Reddit",
+        "Synthetic-SpectrumHomophily"
+      ],
+      "external_resources": {
+        "hugging_face": {
+          "models": [
+            {
+              "id": "S0L009/Luna-GNN-Scorer",
+              "author": "S0L009",
+              "sha": "317454f266ca8035f51ba6fe27e7c58e48c70485",
+              "created_at": "2025-05-12T10:54:18+00:00",
+              "last_modified": "2025-08-27T17:15:58+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 0,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "Category2Id.json"
+                },
+                {
+                  "rfilename": "ID2Category.json"
+                },
+                {
+                  "rfilename": "ID2Vertex.json"
+                },
+                {
+                  "rfilename": "Model_metadata.json"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "Vertex2Category.json"
+                },
+                {
+                  "rfilename": "Vertex2Id.json"
+                },
+                {
+                  "rfilename": "VertexAttrs.pkl"
+                },
+                {
+                  "rfilename": "models.pt"
+                }
+              ],
+              "card_data": {
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "en",
+                "region:us"
+              ],
+              "readme": "---\nlanguage:\n- en\n---",
+              "extracted_code": ""
+            }
+          ],
+          "datasets": [
+            {
+              "id": "scikit-fingerprints/LRGB_Peptides-func",
+              "author": "scikit-fingerprints",
+              "sha": "17b011663e772d932cf85908104db0ca2a04da96",
+              "created_at": "2024-10-11T11:52:12+00:00",
+              "last_modified": "2024-10-11T11:59:30+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 106,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "lrgb_splits_peptides_func.json"
+                },
+                {
+                  "rfilename": "peptides_func.csv"
+                }
+              ],
+              "card_data": {
+                "license": "cc-by-nc-4.0",
+                "language": [],
+                "tags": [
+                  "chemistry",
+                  "biology",
+                  "medical"
+                ],
+                "datasets": [],
+                "task_categories": [
+                  "tabular-classification",
+                  "graph-ml",
+                  "text-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:tabular-classification",
+                "task_categories:graph-ml",
+                "task_categories:text-classification",
+                "license:cc-by-nc-4.0",
+                "size_categories:10K<n<100K",
+                "format:csv",
+                "modality:tabular",
+                "modality:text",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us",
+                "chemistry",
+                "biology",
+                "medical"
+              ],
+              "readme": "---\nlicense: cc-by-nc-4.0\ntask_categories:\n- tabular-classification\n- graph-ml\n- text-classification\ntags:\n- chemistry\n- biology\n- medical\npretty_name: LRGB Peptides-func\nsize_categories:\n- 10K<n<100K\nconfigs:\n- config_name: default\n  data_files:\n  - split: train\n    path: \"peptides_func.csv\"\n---\n# LRGB Peptides-func\n\nPeptides-func (Peptides functional) dataset, part of Long Range Graph Benchmark (LRGB) [[1]](#1). It is intended to be used through \n[scikit-fingerprints](https://github.com/scikit-fingerprints/scikit-fingerprints) library.\n\nThe task is to predict functional properties of peptides.\n\n| **Characteristic** |  **Description**  |\n|:------------------:|:-----------------:|\n|        Tasks       |         10        |\n|      Task type     |   classification  |\n|    Total samples   |       15535       |\n|  Recommended split | stratified random |\n| Recommended metric |       AUPRC       |\n\n## References\n<a id=\"1\">[1]</a> \nDwivedi, Vijay Prakash, et al.\n\"Long Range Graph Benchmark\"\nAdvances in Neural Information Processing Systems 35 (2022): 22326-22340\nhttps://proceedings.neurips.cc/paper_files/paper/2022/hash/8c3c666820ea055a77726d66fc7d447f-Abstract-Datasets_and_Benchmarks.html",
+              "extracted_code": ""
+            },
+            {
+              "id": "LRGB/peptides-functional",
+              "author": "LRGB",
+              "sha": "a3fe78950263236caa5b6d8e94a9936020212cbb",
+              "created_at": "2023-02-16T23:28:39+00:00",
+              "last_modified": "2023-02-16T23:32:21+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 84,
+              "likes": 1,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "geometric_data_processed.pt"
+                },
+                {
+                  "rfilename": "pre_filter.pt"
+                },
+                {
+                  "rfilename": "pre_transform.pt"
+                }
+              ],
+              "card_data": {
+                "license": "cc-by-nc-4.0",
+                "language": [],
+                "tags": [
+                  "lrgb"
+                ],
+                "datasets": [],
+                "task_categories": [
+                  "graph-ml"
+                ],
+                "size_categories": [
+                  "1M<n<10M"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:graph-ml",
+                "license:cc-by-nc-4.0",
+                "size_categories:1M<n<10M",
+                "arxiv:2206.08164",
+                "region:us",
+                "lrgb"
+              ],
+              "readme": "---\ntask_categories:\n- graph-ml\nsize_categories:\n- 1M<n<10M\ntags:\n- lrgb\nlicense: cc-by-nc-4.0\n---\n\n# `peptides-functional`\n\n### Dataset Summary\n\n|  Dataset | Domain  |  Task | Node Feat. (dim)  | Edge Feat. (dim) | Perf. Metric | \n|---|---|---|---|---|---|\n| Peptides-func | Chemistry | Graph Classification | Atom Encoder (9) | Bond Encoder (3) | AP\n\n|  Dataset | # Graphs  |  # Nodes | μ Nodes  | μ Deg. | # Edges | μ Edges | μ Short. Path | μ Diameter \n|---|---:|---:|---:|:---:|---:|---:|---:|---:|\n| Peptides-func | 15,535 | 2,344,859 | 150.94 | 2.04 | 4,773,974 | 307.30 | 20.89±9.79 | 56.99±28.72 |\n\n## Additional Information\n\n### Dataset Curators\n\n* Vijay Prakash Dwivedi ([vijaydwivedi75](https://github.com/vijaydwivedi75))\n\n### Citation Information\n\n```\n@article{dwivedi2022LRGB,\n  title={Long Range Graph Benchmark}, \n  author={Dwivedi, Vijay Prakash and Rampášek, Ladislav and Galkin, Mikhail and Parviz, Ali and Wolf, Guy and Luu, Anh Tuan and Beaini, Dominique},\n  journal={arXiv:2206.08164},\n  year={2022}\n}\n```",
+              "extracted_code": ""
+            },
+            {
+              "id": "jxie/flickr8k",
+              "author": "jxie",
+              "sha": "56f58c967835f7c508d684f36bd7897cca9d7634",
+              "created_at": "2023-06-25T19:09:16+00:00",
+              "last_modified": "2023-06-25T22:25:03+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 3511,
+              "likes": 5,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/test-00000-of-00001-42a2661d12c73e48.parquet"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00002-2f8f6bfa852eac4b.parquet"
+                },
+                {
+                  "rfilename": "data/train-00001-of-00002-2173151d8cd6c7fb.parquet"
+                },
+                {
+                  "rfilename": "data/validation-00000-of-00001-7025a2b596f14b7b.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:1K<n<10K",
+                "format:parquet",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: image\n    dtype: image\n  - name: caption_0\n    dtype: string\n  - name: caption_1\n    dtype: string\n  - name: caption_2\n    dtype: string\n  - name: caption_3\n    dtype: string\n  - name: caption_4\n    dtype: string\n  splits:\n  - name: train\n    num_bytes: 826721431.0\n    num_examples: 6000\n  - name: validation\n    num_bytes: 138017615.0\n    num_examples: 1000\n  - name: test\n    num_bytes: 136871307.0\n    num_examples: 1000\n  download_size: 274629589\n  dataset_size: 1101610353.0\n---\n# Dataset Card for \"flickr8k\"\n\n[More Information needed](https://github.com/huggingface/datasets/blob/main/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)",
+              "extracted_code": ""
+            },
+            {
+              "id": "nlphuji/flickr30k",
+              "author": "nlphuji",
+              "sha": "2b239befc81b6e3f035ce6bd52f5f4d60f5625f7",
+              "created_at": "2023-01-19T12:00:06+00:00",
+              "last_modified": "2023-01-19T17:40:41+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 3041,
+              "likes": 74,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "flickr30k-images.zip"
+                },
+                {
+                  "rfilename": "flickr30k.py"
+                },
+                {
+                  "rfilename": "flickr_annotations_30k.csv"
+                }
+              ],
+              "tags": [
+                "size_categories:10K<n<100K",
+                "modality:image",
+                "modality:text",
+                "library:datasets",
+                "library:mlcroissant",
+                "region:us"
+              ],
+              "readme": "# Flickr30k\n\nOriginal paper: [From image descriptions to visual denotations: New similarity metrics for semantic inference over event descriptions](https://aclanthology.org/Q14-1006)\n\nHomepage: https://shannon.cs.illinois.edu/DenotationGraph/\n\nBibtex:\n```\n@article{young2014image,\n  title={From image descriptions to visual denotations: New similarity metrics for semantic inference over event descriptions},\n  author={Young, Peter and Lai, Alice and Hodosh, Micah and Hockenmaier, Julia},\n  journal={Transactions of the Association for Computational Linguistics},\n  volume={2},\n  pages={67--78},\n  year={2014},\n  publisher={MIT Press}\n}\n```",
+              "extracted_code": ""
+            },
+            {
+              "id": "HuggingFaceGECLM/REDDIT_comments",
+              "author": "HuggingFaceGECLM",
+              "sha": "54779d3d1f1c1b12e5989f695e13d38b394a558f",
+              "created_at": "2023-03-15T14:14:58+00:00",
+              "last_modified": "2023-03-17T07:52:51+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 3380,
+              "likes": 13,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/AskHistorians-00000-of-00005-7bc8c6a7ee105086.parquet"
+                },
+                {
+                  "rfilename": "data/AskHistorians-00001-of-00005-a4b2a36ae8eb6dde.parquet"
+                },
+                {
+                  "rfilename": "data/AskHistorians-00002-of-00005-f37b6800dc969287.parquet"
+                },
+                {
+                  "rfilename": "data/AskHistorians-00003-of-00005-330d2299e0da6dec.parquet"
+                },
+                {
+                  "rfilename": "data/AskHistorians-00004-of-00005-76c3eb5c7cde9f6f.parquet"
+                },
+                {
+                  "rfilename": "data/DIY-00000-of-00005-512b4731dec4f768.parquet"
+                },
+                {
+                  "rfilename": "data/DIY-00001-of-00005-dc205c62f6df1562.parquet"
+                },
+                {
+                  "rfilename": "data/DIY-00002-of-00005-843a8ff04871b6a7.parquet"
+                }
+              ],
+              "card_data": {
+                "license": [],
+                "language": [
+                  "en"
+                ],
+                "tags": [
+                  "reddit",
+                  "social-media"
+                ],
+                "datasets": [],
+                "task_categories": [
+                  "text-generation"
+                ],
+                "size_categories": [
+                  "10B<n<100B"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:text-generation",
+                "task_ids:dialogue-modeling",
+                "task_ids:language-modeling",
+                "annotations_creators:no-annotation",
+                "language_creators:found",
+                "multilinguality:monolingual",
+                "language:en",
+                "size_categories:100M<n<1B",
+                "format:parquet",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "arxiv:2001.08435",
+                "region:us",
+                "reddit",
+                "social-media"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: archived\n    dtype: string\n  - name: author\n    dtype: string\n  - name: author_fullname\n    dtype: string\n  - name: body\n    dtype: string\n  - name: comment_type\n    dtype: string\n  - name: controversiality\n    dtype: string\n  - name: created_utc\n    dtype: string\n  - name: edited\n    dtype: string\n  - name: gilded\n    dtype: string\n  - name: id\n    dtype: string\n  - name: link_id\n    dtype: string\n  - name: locked\n    dtype: string\n  - name: name\n    dtype: string\n  - name: parent_id\n    dtype: string\n  - name: permalink\n    dtype: string\n  - name: retrieved_on\n    dtype: string\n  - name: score\n    dtype: string\n  - name: subreddit_id\n    dtype: string\n  - name: subreddit_name_prefixed\n    dtype: string\n  - name: subreddit_type\n    dtype: string\n  - name: total_awards_received\n    dtype: string\n  splits:\n  - name: programming\n    num_bytes: 3466623746\n    num_examples: 7503347\n  - name: tifu\n    num_bytes: 4761338653\n    num_examples: 12738669\n  - name: explainlikeimfive\n    num_bytes: 8451732573\n    num_examples: 16392814\n  - name: WritingPrompts\n    num_bytes: 4651591771\n    num_examples: 4436210\n  - name: changemyview\n    num_bytes: 8603031915\n    num_examples: 11600073\n  - name: LifeProTips\n    num_bytes: 5272994396\n    num_examples: 12829459\n  - name: todayilearned\n    num_bytes: 22655655241\n    num_examples: 60199778\n  - name: science\n    num_bytes: 7069809765\n    num_examples: 18112884\n  - name: askscience\n    num_bytes: 3144754665\n    num_examples: 6286702\n  - name: ifyoulikeblank\n    num_bytes: 547200329\n    num_examples: 1332211\n  - name: Foodforthought\n    num_bytes: 308377128\n    num_examples: 567900\n  - name: IWantToLearn\n    num_bytes: 408331672\n    num_examples: 745543\n  - name: bestof\n    num_bytes: 2003718831\n    num_examples: 4347522\n  - name: IAmA\n    num_bytes: 9380094090\n    num_examples: 25778822\n  - name: socialskills\n    num_bytes: 1000014402\n    num_examples: 1842733\n  - name: relationship_advice\n    num_bytes: 22298879735\n    num_examples: 38937398\n  - name: philosophy\n    num_bytes: 1494947876\n    num_examples: 2391695\n  - name: YouShouldKnow\n    num_bytes: 1165617658\n    num_examples: 2639265\n  - name: history\n    num_bytes: 1457852402\n    num_examples: 2962043\n  - name: books\n    num_bytes: 4562689426\n    num_examples: 10187495\n  - name: Showerthoughts\n    num_bytes: 13259109532\n    num_examples: 34123213\n  - name: personalfinance\n    num_bytes: 9484869588\n    num_examples: 18361314\n  - name: buildapc\n    num_bytes: 9801044390\n    num_examples: 21761801\n  - name: EatCheapAndHealthy\n    num_bytes: 853462012\n    num_examples: 1821897\n  - name: boardgames\n    num_bytes: 3131627378\n    num_examples: 6328926\n  - name: malefashionadvice\n    num_bytes: 2928017882\n    num_examples: 7712258\n  - name: femalefashionadvice\n    num_bytes: 1619784736\n    num_examples: 3262969\n  - name: scifi\n    num_bytes: 888152056\n    num_examples: 2193741\n  - name: Fantasy\n    num_bytes: 2285934538\n    num_examples: 4566639\n  - name: Games\n    num_bytes: 10396813188\n    num_examples: 23373965\n  - name: bodyweightfitness\n    num_bytes: 794549854\n    num_examples: 1613634\n  - name: SkincareAddiction\n    num_bytes: 3421122597\n    num_examples: 5660550\n  - name: podcasts\n    num_bytes: 464773126\n    num_examples: 943266\n  - name: suggestmeabook\n    num_bytes: 1842944304\n    num_examples: 3492937\n  - name: AskHistorians\n    num_bytes: 2244587909\n    num_examples: 2714353\n  - name: gaming\n    num_bytes: 28374513722\n    num_examples: 85729253\n  - name: DIY\n    num_bytes: 2113533684\n    num_examples: 4489265\n  - name: sports\n    num_bytes: 2230129132\n    num_examples: 6470079\n  - name: space\n    num_bytes: 3081499208\n    num_examples: 7896182\n  - name: gadgets\n    num_bytes: 1683252868\n    num_examples: 4104833\n  - name: Documentaries\n    num_bytes: 1852644771\n    num_examples: 4051474\n  - name: GetMotivated\n    num_bytes: 1211761267\n    num_examples: 3221980\n  - name: UpliftingNews\n    num_bytes: 2003149025\n    num_examples: 4741948\n  - name: technology\n    num_bytes: 10826871436\n    num_examples: 25404699\n  - name: Fitness\n    num_bytes: 6191132755\n    num_examples: 14319856\n  - name: travel\n    num_bytes: 1740556350\n    num_examples: 3806755\n  - name: lifehacks\n    num_bytes: 626791812\n    num_examples: 1799437\n  - name: Damnthatsinteresting\n    num_bytes: 6376694618\n    num_examples: 15643554\n  - name: gardening\n    num_bytes: 1825313940\n    num_examples: 4568468\n  - name: mildlyinteresting\n    num_bytes: 9079894206\n    num_examples: 26436769\n  download_size: 109177016105\n  dataset_size: 255339788158\nannotations_creators:\n- no-annotation\nlanguage:\n- en\nlanguage_creators:\n- found\nlicense: []\nmultilinguality:\n- monolingual\npretty_name: Reddit comments\nsize_categories:\n- 10B<n<100B\nsource_datasets: []\ntags:\n- reddit\n- social-media\ntask_categories:\n- text-generation\ntask_ids:\n- dialogue-modeling\n- language-modeling\n---\n\n# Dataset Card for \"REDDIT_comments\"\n## Dataset Description\n\n- **Homepage:**\n- **Paper: https://arxiv.org/abs/2001.08435**\n\n### Dataset Summary\nComments of 50 high-quality subreddits, extracted from the REDDIT PushShift data dumps (from 2006 to Jan 2023).\n\n### Supported Tasks\nThese comments can be used for text generation and language modeling, as well as dialogue modeling.\n\n## Dataset Structure\n### Data Splits\nEach split corresponds to a specific subreddit in the following list: \"tifu\", \"explainlikeimfive\", \"WritingPrompts\", \"changemyview\", \"LifeProTips\", \"todayilearned\", \"science\", \"askscience\", \"ifyoulikeblank\", \"Foodforthought\", \"IWantToLearn\", \"bestof\", \"IAmA\", \"socialskills\", \"relationship_advice\", \"philosophy\", \"YouShouldKnow\", \"history\", \"books\", \"Showerthoughts\", \"personalfinance\", \"buildapc\", \"EatCheapAndHealthy\", \"boardgames\", \"malefashionadvice\", \"femalefashionadvice\", \"scifi\", \"Fantasy\", \"Games\", \"bodyweightfitness\", \"SkincareAddiction\", \"podcasts\", \"suggestmeabook\", \"AskHistorians\", \"gaming\", \"DIY\", \"mildlyinteresting\", \"sports\", \"space\", \"gadgets\", \"Documentaries\", \"GetMotivated\", \"UpliftingNews\", \"technology\", \"Fitness\", \"travel\", \"lifehacks\", \"Damnthatsinteresting\", \"gardening\", \"programming\"\n\n## Dataset Creation\n\n### Curation Rationale\nAll the information fields have been cast to string, as their format change through time from one dump to the following. A reduced number of keys have been kept: \"archived\", \"author\", \"author_fullname\", \"body\", \"comment_type\", \"controversiality\", \"created_utc\", \"edited\", \"gilded\", \"id\", \"link_id\", \"locked\", \"name\", \"parent_id\", \"permalink\", \"retrieved_on\", \"score\", \"subreddit\", \"subreddit_id\", \"subreddit_name_prefixed\", \"subreddit_type\", \"total_awards_received\".\n\n### Source Data\nThe [Reddit PushShift data dumps](https://files.pushshift.io/reddit/) are part of a data collection effort which crawls Reddit at regular intervals, to extract and keep all its data.\n\n#### Initial Data Collection and Normalization\nSee the paper.\n\n#### Who are the source language producers?\nRedditors are mostly young (65% below 30), male (70%), and American (50% of the site).\n\n### Personal and Sensitive Information\nThe data contains Redditor's usernames associated to their content.\n\n## Considerations for Using the Data\n\nThis dataset should be anonymized before any processing.\nThough the subreddits selected are considered as being of higher quality, they can still reflect what you can find on the internet in terms of expressions of biases and toxicity.\n\n### Contributions\n\nThanks to [@clefourrier](https://github.com/clefourrier) for adding this dataset.",
+              "extracted_code": ""
+            },
+            {
+              "id": "fddemarco/pushshift-reddit-comments",
+              "author": "fddemarco",
+              "sha": "987111c7c262a3c1255f5da4ecc545782280e794",
+              "created_at": "2023-04-04T13:22:08+00:00",
+              "last_modified": "2023-05-14T17:19:16+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 3100,
+              "likes": 20,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": ".gitignore"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/RC_2012-01.parquet"
+                },
+                {
+                  "rfilename": "data/RC_2012-02.parquet"
+                },
+                {
+                  "rfilename": "data/RC_2012-03.parquet"
+                },
+                {
+                  "rfilename": "data/RC_2012-04.parquet"
+                },
+                {
+                  "rfilename": "data/RC_2012-05.parquet"
+                },
+                {
+                  "rfilename": "data/RC_2012-06.parquet"
+                },
+                {
+                  "rfilename": "data/RC_2012-07.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:1B<n<10B",
+                "format:parquet",
+                "modality:tabular",
+                "modality:text",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: author\n    dtype: string\n  - name: body\n    dtype: string\n  - name: controversiality\n    dtype: int64\n  - name: created_utc\n    dtype: int64\n  - name: link_id\n    dtype: string\n  - name: score\n    dtype: int64\n  - name: subreddit\n    dtype: string\n  - name: subreddit_id\n    dtype: string\n  - name: id\n    dtype: string\n  splits:\n  - name: train\n    num_bytes: 1920019700\n    num_examples: 15034827\n  download_size: 1920019700\n  dataset_size: 1920019700\n---\n# Dataset Card for \"pushshift-reddit\"\n\n[More Information needed](https://github.com/huggingface/datasets/blob/main/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)\n",
+              "extracted_code": ""
+            }
+          ]
+        }
+      }
+    }
   },
   "idea_info_history": [
     {
