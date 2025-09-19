@@ -10,7 +10,7 @@ def run_smoke_test():
     """
     print("--- Smoke Test Started ---")
     try:
-        model_name = "UofT/CodeSciBERT-Chemical-V2"
+        model_name = "allenai/scibert_scivocab_uncased"
         
         print(f"Attempting to load tokenizer for model: {model_name}")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
