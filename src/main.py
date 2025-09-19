@@ -10,10 +10,8 @@ def run_smoke_test():
     """
     print("--- Smoke Test Started ---")
     try:
-        # INTENTIONAL ERROR: The model name has a typo and does not exist.
-        # The AI agent is expected to find this error, search for a valid alternative 
-        # like "bert-base-uncased", and fix the code.
-        model_name = "bert-base-uncased-this-is-a-typo"
+        # Fixed model name to use a valid BERT model
+        model_name = "bert-base-uncased"
         
         print(f"Attempting to load tokenizer for model: {model_name}")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
