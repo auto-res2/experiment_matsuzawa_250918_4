@@ -10,8 +10,7 @@ def run_smoke_test():
     """
     print("--- Smoke Test Started ---")
     try:
-        # Fixed model name to use a valid BERT model
-        model_name = "bert-base-uncased"
+        model_name = "UofT/CodeSciBERT-Chemical-V2"
         
         print(f"Attempting to load tokenizer for model: {model_name}")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
